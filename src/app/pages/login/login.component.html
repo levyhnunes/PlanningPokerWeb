@@ -1,0 +1,16 @@
+<div class="text-center">
+    <main class="form-signin">
+        <form [formGroup]="loginForm" (submit)="submitForm()">
+            <h1 class="h3 mb-3 fw-normal">Informe seu nome de usuário</h1>
+
+            <div class="form-floating">
+                <label for="userName">Nome</label>
+                <input class="form-control" id="userName" formControlName="userName">
+                <p class="text-danger" *ngIf="loginForm.get('userName').invalid && loginForm.get('userName').touched">
+                    Nome obrigatório
+                </p>
+            </div>
+            <button [disabled]="loginForm.invalid" class="w-100 btn btn-lg btn-primary" type="submit">Entrar</button>
+        </form>
+    </main>
+</div>
