@@ -9,9 +9,9 @@ import {
 } from './auth/auth-guard.service';
 
 const routes: Routes = [
-  { path: 'cards', component: DeckCardComponent, canActivate: [AuthGuard] },
+  { path: 'room', component: DeckCardComponent, canActivate: [AuthGuard] },
   { path: 'login', component: LoginComponent },
-  { path: '', redirectTo: '/cards', pathMatch: 'full' }
+  { path: '', redirectTo: '/room', pathMatch: 'full' }
 ];
 
 @NgModule({

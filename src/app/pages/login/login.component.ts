@@ -25,6 +25,6 @@ export class LoginComponent implements OnInit {
 
   submitForm() {
     localStorage.setItem("@planning-poker:user", this.loginForm.value.userName);
-    this.router.navigate(['cards']);
+    this.router.navigate(['room']);
   }
 }
