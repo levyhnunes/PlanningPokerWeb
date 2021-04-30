@@ -1,13 +1,28 @@
 <p>deck-card works!</p>
 
-<ul>
-    <li *ngFor="let user of users">{{user.name}}</li>
-</ul>
+<div *ngFor="let player of players" class="row">
+    <div class="col-md-12">
+        <span>{{player.name}}</span><span *ngIf="room.reveal"> - {{player.card}}</span>
+        <button *ngIf="playerLogged.isAdmin && playerLogged.id !== player.id" (click)="newPlayerAdm(player.id)">Tornar
+            ADM</button>
+    </div>
+</div>
+<div *ngIf="!room.reveal">
+    <button (click)="addCard(1)"
+        [ngStyle]="{'background-color': (playerLogged.card==1) ? '#73c7af' : '#ffffff'}">1</button>
+    <button (click)="addCard(2)"
+        [ngStyle]="{'background-color': (playerLogged.card==2) ? '#73c7af' : '#ffffff'}">2</button>
+    <button (click)="addCard(3)"
+        [ngStyle]="{'background-color': (playerLogged.card==3) ? '#73c7af' : '#ffffff'}">3</button>
+    <button (click)="addCard(5)"
+        [ngStyle]="{'background-color': (playerLogged.card==5) ? '#73c7af' : '#ffffff'}">5</button>
+    <button (click)="addCard(8)"
+        [ngStyle]="{'background-color': (playerLogged.card==8) ? '#73c7af' : '#ffffff'}">8</button>
+    <button (click)="addCard(13)"
+        [ngStyle]="{'background-color': (playerLogged.card==13) ? '#73c7af' : '#ffffff'}">13</button>
+    <button (click)="addCard(21)"
+        [ngStyle]="{'background-color': (playerLogged.card==21) ? '#73c7af' : '#ffffff'}">21</button>
+</div>
 
-<button>1</button>
-<button>2</button>
-<button>3</button>
-<button>5</button>
-<button>8</button>
-<button>13</button>
-<button>21</button>
+<button (click)="updateRoom(true)" *ngIf="playerLogged.isAdmin && !room.reveal">Virar Cartas</button>
+<button (click)="updateRoom(false)" *ngIf="playerLogged.isAdmin && room.reveal">Resetar</button>

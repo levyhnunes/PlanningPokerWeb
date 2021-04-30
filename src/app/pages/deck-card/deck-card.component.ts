@@ -1,13 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { MenuItem } from 'primeng/api'
+
 import { throwError } from "rxjs";
 import { catchError } from "rxjs/operators";
 
 import { SignalRService } from 'src/app/services/signalr-service';
-import { User } from 'src/app/models/user';
-
-
-
+import { Player } from 'src/app/models/player';
+import { Room } from 'src/app/models/room';
 
 @Component({
   selector: 'app-deck-card',
@@ -16,54 +16,113 @@ import { User } from 'src/app/models/user';
 })
 export class DeckCardComponent implements OnInit {
 
-  users: User[];
+  room: Room;
+  players: Player[];
+  playerLogged: Player;
+  items: MenuItem[];
 
   constructor(public signalRService: SignalRService, private http: HttpClient) { }
 
   ngOnInit(): void {
-    this.signalRService.startConnection().then(connectionId => {
-      console.log('connectionId: ', connectionId)
-      const userName = localStorage.getItem("@planning-poker:user")
-      const params = {
-        name: userName,
-        connectionId: connectionId
-      };
-      this.http.post<User>('https://localhost:44392/api/Room/AddPlayer', params)
-        .subscribe(user => {
-          // this.users.push(user);
-        })
-      // .pipe(catchError(error => {
-      //   console.log(error);
-      //   return throwError(error);
-      // }));
-
-    });
-    this.signalRService.onPlayes((newUser: any) => {
-      const user = this.users.find(user => user.id == newUser.id);
-      if (!user) {
-        this.users.push(newUser);
-        console.log("newUser ", newUser);
-      }
-    });
-    this.signalRService.onPlayerCard((playerCard) => {
-      const user = this.users.find(user => user.connectionId == playerCard.connectionId);
-      user.card = playerCard.card;
-      console.log("playerCard ", playerCard);
-    });
-    this.signalRService.onDisconnectedPlayer((connectionId) => {
-      this.users = this.users.filter(user => user.connectionId !== connectionId);
-      console.log("disconnectedPlayer ", connectionId);
-    })
-    this.startHttpRequest();
-    console.log("deu certo !!!")
+    this.playerLogged = new Player();
+    // this.startConnection();
+    // this.onPlayers();
+    // this.onPlayerCard();
+    // this.onDisconnectedPlayer();
+    this.getRoom();
   }
 
-  private startHttpRequest = () => {
-    this.http.get<User[]>('https://localhost:44392/api/Room/GetPlayers')
-      .subscribe(users => {
-        this.users = users;
-        console.log("users ", users);
+  private getRoom = () => {
+    this.http.get<Room>('https://localhost:44392/api/Rooms')
+      .subscribe(room => {
+        this.room = room;
+        this.players = room.players
+        this.startConnection(room.id);
+        console.log("room ", room);
       })
   }
 
+  private startConnection(roomId: number) {
+    this.signalRService.startConnection().then(connectionId => {
+      this.onPlayers();
+      this.onPlayerCard();
+      this.onDisconnectedPlayer();
+      this.onRoom(roomId);
+
+      this.playerLogged.connectionId = connectionId;
+      const params = {
+        name: localStorage.getItem("@planning-poker:user"),
+        connectionId: connectionId
+      };
+
+      this.http.post<Player>('https://localhost:44392/api/Rooms/' + roomId + '/Players', params).toPromise();
+    });
+  }
+
+  private onPlayers() {
+    this.signalRService.onPlayers((newPlayer: Player) => {
+      console.log("newPlayer ", newPlayer);
+      const player = this.players.find(user => user.id == newPlayer.id);
+      if (!player) {
+        this.players.push(newPlayer);
+        console.log("newUser ", newPlayer);
+      }
+      console.log("playerLogged ", this.playerLogged);
+      if (this.playerLogged.connectionId == newPlayer.connectionId) {
+        this.playerLogged = newPlayer;
+      }
+    });
+  }
+
+  private onPlayerCard() {
+    this.signalRService.onPlayerCard((playerCard) => {
+      const user = this.players.find(user => user.connectionId == playerCard.connectionId);
+      user.card = playerCard.card;
+      console.log("playerCard ", playerCard);
+    });
+  }
+
+  private onDisconnectedPlayer() {
+    this.signalRService.onDisconnectedPlayer((connectionId) => {
+      this.players = this.players.filter(user => user.connectionId !== connectionId);
+      console.log("disconnectedPlayer ", connectionId);
+    })
+  }
+
+  private onRoom(roomId: number) {
+    this.signalRService.onRoom(roomId, (room: Room) => {
+      console.log("###UpdateRomm")
+      this.room.reveal = room.reveal
+      if (!room.reveal) {
+        this.players.map(p => p.card = null);
+      }
+    })
+  }
+
+  newPlayerAdm(userId: number) {
+    const params = {
+      oldAdmId: this.playerLogged.id,
+      newAdmId: userId
+    };
+
+    this.http.post<Player>('https://localhost:44392/api/Rooms/NewPlayerAdm', params)
+      .subscribe(_ => this.playerLogged.isAdmin = false)
+  }
+
+  addCard(card: number): void {
+    this.playerLogged.card = card;
+    const params = {
+      connectionId: this.playerLogged.connectionId,
+      card: card,
+    };
+    this.http.put<Player>('https://localhost:44392/api/Rooms/Players', params).toPromise();
+  }
+
+  updateRoom(reveal: boolean) {
+    const params = {
+      id: this.room.id,
+      reveal: reveal
+    };
+    this.http.put<Player>('https://localhost:44392/api/Rooms', params).toPromise();
+  }
 }

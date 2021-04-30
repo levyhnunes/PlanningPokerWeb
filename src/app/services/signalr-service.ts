@@ -26,7 +26,7 @@ export class SignalRService {
             .catch(err => console.log('Error while starting connection: ' + err))
     }
 
-    public onPlayes = (functionResult) => {
+    public onPlayers = (functionResult) => {
         return this.hubConnection.on('ReceivePlayer', functionResult);
     }
 
@@ -36,5 +36,10 @@ export class SignalRService {
 
     public onDisconnectedPlayer = (functionResult) => {
         return this.hubConnection.on('DisconnectedPlayer', functionResult);
+    }
+
+    public onRoom = (roomId: number, functionResult) => {
+        console.log('UpdateRoom#' + roomId);
+        return this.hubConnection.on('UpdateRoom#' + roomId, functionResult);
     }
 }
